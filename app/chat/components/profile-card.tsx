@@ -91,7 +91,7 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
             ))}
             {(profile?.skills?.length ?? 0) > 3 && (
               <span className='px-2 py-0.5 text-gray-400 text-xs'>
-                +{(profile?.skills?.length ?? 0) - 3} más
+                +{(profile?.skills?.length ?? 0) - 3} more
               </span>
             )}
           </div>
@@ -102,7 +102,7 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               {/* Summary */}
               <div className='pt-3 border-t border-gray-700/50'>
                 <h4 className='text-xs font-semibold text-gray-400 mb-1.5'>
-                  Resumen
+                  Summary
                 </h4>
                 <p className='text-sm text-gray-300 leading-relaxed'>
                   {profile?.summary}
@@ -112,7 +112,7 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               {/* All Skills */}
               <div>
                 <h4 className='text-xs font-semibold text-gray-400 mb-1.5'>
-                  Todas las habilidades
+                  All skills
                 </h4>
                 <div className='flex flex-wrap gap-1.5'>
                   {profile?.skills?.map((skill, skillIndex) => (
@@ -129,15 +129,15 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               {/* Additional Info */}
               <div className='grid grid-cols-2 gap-3 text-xs'>
                 <div>
-                  <span className='text-gray-400'>Área: </span>
+                  <span className='text-gray-400'>Area: </span>
                   <span className='text-white'>{profile?.area}</span>
                 </div>
                 <div>
-                  <span className='text-gray-400'>Oficina: </span>
+                  <span className='text-gray-400'>Office: </span>
                   <span className='text-white'>{profile?.office}</span>
                 </div>
                 <div className='col-span-2'>
-                  <span className='text-gray-400'>Contrato: </span>
+                  <span className='text-gray-400'>Contract: </span>
                   <span className='text-white'>
                     {profile?.contractType?.join(', ')}
                   </span>
@@ -151,10 +151,10 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
                 className='flex items-center gap-1.5 text-pink hover:text-pink/80 transition-colors'
               >
                 <Mail className='size-4' />
-                <span className='font-medium text-sm leading-0'>Contactar</span>
+                <span className='font-medium text-sm leading-0'>Contact</span>
               </a>
               <CollapsibleTrigger className='cursor-pointer flex items-center gap-1 text-xs text-gray-400 hover:text-main-light-blue transition-colors'>
-                {isOpen ? 'Ver menos' : 'Ver más'}
+                {isOpen ? 'See less' : 'See more'}
                 <ChevronDown
                   className={`w-4 h-4 transition-transform ${
                     isOpen ? 'rotate-180' : ''

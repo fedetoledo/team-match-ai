@@ -126,7 +126,7 @@ export default function Home() {
                     transition={springTransition()}
                     className="text-3xl font-semibold text-balance selection:bg-primary text-slate-200 selection:text-white"
                   >
-                    Tu Asistente de Asignación de Talento con IA
+                    Your AI Talent Assignment Assistant
                   </motion.h3>
                   <motion.p
                     initial={{ y: 70, opacity: 0 }}
@@ -135,9 +135,9 @@ export default function Home() {
                     transition={springTransition(0.1)}
                     className="text-balance text-gray-400 leading-relaxed selection:bg-secondary-1 selection:text-black"
                   >
-                    Optimiza la asignación de desarrolladores a proyectos usando
-                    IA. Analiza habilidades, experiencia previa y disponibilidad
-                    para ofrecerte el mejor match automáticamente.
+                    Optimize developer assignment to projects using AI. Analyze
+                    skills, previous experience, and availability to
+                    automatically offer you the best match.
                   </motion.p>
                 </div>
               )}
@@ -167,9 +167,9 @@ export default function Home() {
 
             {requestFinished && !hasItems && (
               <div className="w-full items-center justify-center flex flex-col gap-4 flex-1">
-                <p>No se encontraron perfiles para tu busqueda</p>
+                <p>No profiles found for your search</p>
                 <Button disabled={isLoading} onClick={handleNewSearch}>
-                  Realizar nueva búsqueda
+                  New search
                 </Button>
               </div>
             )}
@@ -265,7 +265,7 @@ export default function Home() {
                   exit={{ opacity: 0, y: 100, transition: { delay: 0.0 } }}
                   className="z-40 text-xl absolute left-1/2 -translate-x-1/2 -bottom-10 tracking-wide bg-linear-to-br from-primary to-lime-200 bg-clip-text text-transparent  whitespace-nowrap"
                 >
-                  Evaluando perfiles
+                  Evaluating profiles
                 </motion.p>
               )}
             </AnimatePresence>

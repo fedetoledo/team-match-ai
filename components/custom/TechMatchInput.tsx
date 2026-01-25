@@ -96,7 +96,7 @@ export function TechMatchInput({
             placeholder={
               selectedFile || isLoading
                 ? ''
-                : 'Escribe los requerimientos del puesto'
+                : 'Enter the job requirements'
             }
             disabled={!!selectedFile || isProcessingPdf} // disable typing if file is selected or processing
           />
@@ -130,7 +130,7 @@ export function TechMatchInput({
                   <FilePlus size={20} className='text-slate-300' />
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Subir PDF</TooltipContent>
+              <TooltipContent>Upload PDF</TooltipContent>
             </Tooltip>
 
             <ModelSelector />
@@ -178,8 +178,8 @@ export function TechMatchInput({
             </TooltipTrigger>
             <TooltipContent>
               {isProcessingPdf
-                ? 'Procesando PDF...'
-                : 'Ingresa requerimientos para enviar el mensaje'}
+                ? 'Processing PDF...'
+                : 'Enter requirements to send the message'}
             </TooltipContent>
           </Tooltip>
         </div>

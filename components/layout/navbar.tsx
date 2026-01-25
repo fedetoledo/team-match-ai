@@ -28,7 +28,7 @@ export const Navbar = ({
           TechMatch Bot
         </h1>
         <h2 className='text-gray-400'>
-          Agente de Asignación Inteligente de Recursos Técnicos
+          Intelligent Technical Resource Assignment Agent
         </h2>
       </div>
 
@@ -37,11 +37,11 @@ export const Navbar = ({
           <div className='flex items-center gap-10'>
             {isLoading && (
               <span className='flex items-center gap-2 text-gray-400'>
-                Evaluando Perfiles <Loader2 className='animate-spin' />
+                Evaluating Profiles <Loader2 className='animate-spin' />
               </span>
             )}
             <Button size='sm' disabled={isLoading} onClick={handleNewSearch}>
-              Realizar otra búsqueda
+              New search
             </Button>
           </div>
         )}
@@ -55,9 +55,9 @@ export const Navbar = ({
             <DropdownMenuLabel className='uppercase'>Menu</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href='/token-usage'>Uso de Tokens</Link>
+              <Link href='/token-usage'>Token Usage</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Cerrar sesión</DropdownMenuItem>
+            <DropdownMenuItem>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

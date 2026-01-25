@@ -33,7 +33,7 @@ export default function Login() {
 
     if (result.ok) {
       // Handle successful login (e.g., redirect to dashboard)
-      toast.success('Inicio de sesión exitoso');
+      toast.success('Sign in successful');
       redirect('/chat');
     } else {
       // Handle login error (e.g., show error message)
@@ -47,7 +47,7 @@ export default function Login() {
         <FieldSet className='w-full'>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor='username'>Usuario</FieldLabel>
+              <FieldLabel htmlFor='username'>Username</FieldLabel>
               <Input
                 id='username'
                 type='text'
@@ -56,13 +56,13 @@ export default function Login() {
                 onChange={(e) => setUsername(e.target.value)}
               />
               <FieldDescription className='text-gray-400'>
-                Elige un nombre de usuario único para tu cuenta.
+                Choose a unique username for your account.
               </FieldDescription>
             </Field>
             <Field>
-              <FieldLabel htmlFor='password'>Contraseña</FieldLabel>
+              <FieldLabel htmlFor='password'>Password</FieldLabel>
               <FieldDescription className='text-gray-400'>
-                Debe tener al menos 8 caracteres.
+                Must be at least 8 characters.
               </FieldDescription>
               <Input
                 id='password'
@@ -79,7 +79,7 @@ export default function Login() {
             disabled={isLoading || !username || !password}
             className='w-full mt-4'
           >
-            {isLoading ? 'Iniciando...' : 'Iniciar sesión'}
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
         </FieldSet>
       </div>

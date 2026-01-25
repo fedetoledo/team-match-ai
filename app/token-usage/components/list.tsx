@@ -11,7 +11,7 @@ interface HistoryListProps {
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleString('es-ES', {
+  return date.toLocaleString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -65,19 +65,19 @@ export const HistoryList = ({ items }: HistoryListProps) => {
 
           <div className='flex flex-wrap gap-6 text-sm'>
             <div>
-              <span className='text-gray-400'>Tokens de entrada: </span>
+              <span className='text-gray-400'>Input tokens: </span>
               <span className='text-main-light-blue font-semibold'>
                 {item.input_tokens.toLocaleString()}
               </span>
             </div>
             <div>
-              <span className='text-gray-400'>Tokens de salida: </span>
+              <span className='text-gray-400'>Output tokens: </span>
               <span className='text-pink font-semibold'>
                 {item.output_tokens.toLocaleString()}
               </span>
             </div>
             <div>
-              <span className='text-gray-400'>Costo aproximado: </span>
+              <span className='text-gray-400'>Estimated cost: </span>
               <span className='text-green-400 font-semibold'>
                 $
                 {calculateCost(
@@ -88,7 +88,7 @@ export const HistoryList = ({ items }: HistoryListProps) => {
               </span>
             </div>
             <div>
-              <span className='text-gray-400'> Modelo utilizado: </span>
+              <span className='text-gray-400'> Model used: </span>
               <span className='text-gray-300'>{item.model_used}</span>
             </div>
           </div>

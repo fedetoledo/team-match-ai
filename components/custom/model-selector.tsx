@@ -29,14 +29,14 @@ export function ModelSelector() {
     <Select defaultValue={selectedModel} onValueChange={handleSetModel}>
       <SelectTrigger className='w-[190px]'>
         {isLoading ? (
-          <span>Cambiando modelo...</span>
+          <span>Switching model...</span>
         ) : (
-          <SelectValue defaultChecked placeholder='Selecciona un modelo' />
+          <SelectValue defaultChecked placeholder='Select a model' />
         )}
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Modelos</SelectLabel>
+          <SelectLabel>Models</SelectLabel>
           <SelectItem value='gemini-2.5-flash-lite'>
             Gemini 2.5 Flash Lite
           </SelectItem>

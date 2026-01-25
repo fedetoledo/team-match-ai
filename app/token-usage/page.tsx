@@ -55,7 +55,7 @@ const TokenUsage = async () => {
             TechMatch Bot
           </h1>
           <h2 className='text-gray-400'>
-            Agente de Asignación Inteligente de Recursos Técnicos
+            Intelligent Technical Resource Assignment Agent
           </h2>
         </div>
 
@@ -72,9 +72,9 @@ const TokenUsage = async () => {
                 <Link href='/chat'>Chat</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href='/token-usage'>Uso de Tokens</Link>
+                <Link href='/token-usage'>Token Usage</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Cerrar sesión</DropdownMenuItem>
+              <DropdownMenuItem>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -82,11 +82,11 @@ const TokenUsage = async () => {
 
       <div className='max-w-4xl mx-auto'>
         <h1 className='text-3xl font-bold text-main-light-blue mb-8'>
-          Historial de Búsquedas
+          Search History
         </h1>
 
         {sortedHistory.length === 0 ? (
-          <p className='text-gray-400'>No hay búsquedas registradas.</p>
+          <p className='text-gray-400'>No searches recorded.</p>
         ) : (
           <div className='space-y-4'>
             <HistoryList items={sortedHistory} />

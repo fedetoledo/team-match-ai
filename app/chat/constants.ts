@@ -1,23 +1,23 @@
 export const information = [
   {
     id: 'smart-assignation',
-    title: 'Asignación Inteligente',
+    title: 'Smart Assignment',
     description:
-      'Encuentra automáticamente el mejor candidato para cada proyecto según skills y experiencia.',
+      'Automatically find the best candidate for each project based on skills and experience.',
     color: 'text-secondary-1',
   },
   {
     id: 'dynamic-scoring',
-    title: 'Scoring Dinámico',
+    title: 'Dynamic Scoring',
     description:
-      'Calcula un score de compatibilidad para priorizar candidatos según experiencia real y afinidad tecnológica.',
+      'Calculate a compatibility score to prioritize candidates based on real experience and technological affinity.',
     color: 'text-secondary-2',
   },
   {
     id: 'data-based-decisions',
-    title: 'Decisiones Basadas en Datos',
+    title: 'Data-Driven Decisions',
     description:
-      'Reduce el sesgo manual y toma decisiones más rápidas y precisas con evidencia del historial de proyectos.',
+      'Reduce manual bias and make faster, more accurate decisions with evidence from project history.',
     color: 'text-secondary-3',
   },
 ];
