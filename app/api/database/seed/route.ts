@@ -1,14 +1,63 @@
 // @ts-strict-ignore
 import { NextResponse } from 'next/server';
-import Airtable from 'airtable';
+import Airtable, { FieldSet, Records } from 'airtable';
 import { google } from '@ai-sdk/google';
 import { embedMany } from 'ai';
 import { sql } from '@/lib/db';
 
 const EMBEDDING_MODEL = 'text-embedding-004';
-const COLLECTION_NAME = 'employee_profiles_techmatch';
 const BATCH_SIZE = 10; // Process 10 records at a time (Gemini has higher limits)
 const DELAY_BETWEEN_BATCHES = 500; // 500ms delay between batches
+
+interface Profile {
+  id: string;
+  fields: {
+    Surname: string;
+    Hours: number;
+    'Selling Category': string;
+    Job: string;
+    Status: string;
+    'Sell Hours': string;
+    Location: string;
+    Email: string;
+    'Starting Date': string;
+    Seniority: string;
+    'Birth Date': string;
+    'Days of Presenteeism': string[];
+    Skills: string[];
+    Name: string;
+    Duration: string;
+    Area: string;
+    'Full Name': string;
+    Office: string;
+    Position: string;
+    'Seniority Cat': string;
+    Age: number;
+    DNI: string;
+    CUIL: string;
+    'Profile Picture': Array<{
+      id: string;
+      url: string;
+      filename: string;
+      size: number;
+      type: string;
+      thumbnails: {
+        small: { url: string; width: number; height: number };
+        large: { url: string; width: number; height: number };
+        full: { url: string; width: number; height: number };
+      };
+    }>;
+  };
+}
+
+type SeedLog =
+  | {
+      error: string;
+      reason: string;
+    }
+  | {
+      message: string;
+    };
 
 const {
   AIRTABLE_API_KEY,
@@ -16,9 +65,6 @@ const {
   AIRTABLE_TABLE_ID,
   GOOGLE_GENERATIVE_AI_API_KEY,
 } = process.env;
-
-// Helper function to sleep for a specified time
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const checkEnvVars = () => {
   const missingVars = [
@@ -36,43 +82,47 @@ const checkEnvVars = () => {
   };
 };
 
-export async function GET() {
-  try {
-    const { missingEnvVars, hasMissing } = checkEnvVars();
-    if (hasMissing) {
-      return NextResponse.json(
-        { error: `Missing required environment variables: ${missingEnvVars}` },
-        { status: 500 }
-      );
-    }
+const getAirtableData = async (logs: SeedLog[]) => {
+  // Initialize clients
+  const airtable = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(
+    AIRTABLE_BASE_ID!,
+  );
 
-    // Initialize clients
-    const airtable = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(
-      AIRTABLE_BASE_ID!
-    );
+  logs.push({ message: 'Fetching records from Airtable...' });
+  const records = await airtable(AIRTABLE_TABLE_ID!)
+    .select({
+      filterByFormula: "Status = 'Active'",
+    })
+    .all();
+  logs.push({ message: `Fetched ${records.length} records.` });
 
-    const logs: string[] = [];
-    logs.push('Starting database seeding process...');
+  return records.filter((record) => record.fields['Status'] === 'Active');
+};
 
-    // Setup PostgreSQL
-    logs.push('Setting up PostgreSQL process...');
+const generateInitialTables = async (logs: SeedLog[]) => {
+  // Enable the pgvector extension
+  await sql`CREATE EXTENSION IF NOT EXISTS vector`;
+  logs.push({ message: '✓ Enabled pgvector extension.' });
 
-    // Enable the pgvector extension
-    await sql`CREATE EXTENSION IF NOT EXISTS vector`;
-    logs.push('✓ Enabled pgvector extension.');
-
-    // Create the table to store the data and embeddings
-    const tableResult = await sql`
+  // Create the table to store the data and embeddings
+  await sql`
       CREATE TABLE IF NOT EXISTS employee_profiles_techmatch (
         id SERIAL PRIMARY KEY,
         record_id TEXT UNIQUE,
-        content TEXT,
-        metadata JSONB,
-        embedding VECTOR(768)
+        name TEXT,
+        position TEXT,
+        skills TEXT[],
+        location TEXT,
+        office TEXT,
+        seniority TEXT,
+        experience_years TEXT,
+        email TEXT,
+        summary TEXT,
+        summary_embedding VECTOR(768)
       );
     `;
 
-    await sql`
+  await sql`
     CREATE TABLE IF NOT EXISTS record_search (
       id SERIAL PRIMARY KEY,
       query TEXT,
@@ -84,160 +134,169 @@ export async function GET() {
       created_at TIMESTAMP DEFAULT NOW()
     );
     `;
-    logs.push("✓ Ensured 'record_search' table exists.");
+};
 
-    // Check if table already existed or was created
-    if (tableResult.command === 'CREATE') {
-      logs.push(`✓ Created table ${COLLECTION_NAME} with 768 dimensions.`);
-    } else {
-      logs.push(
-        `✓ Table ${COLLECTION_NAME} already exists with 768 dimensions.`
+interface ProcessedProfile {
+  id: string;
+  name: string;
+  position: string;
+  skills: string[];
+  location: string;
+  office: string;
+  seniority: string;
+  experience_years: string;
+  email: string;
+  summary: string;
+}
+
+const insertManyRecords = async (
+  data: ProcessedProfile[],
+  embeddings: number[][],
+) => {
+  for (let i = 0; i < data.length; i++) {
+    const profile = data[i];
+    const embedding = embeddings[i];
+
+    await sql`
+      INSERT INTO employee_profiles_techmatch (record_id, name, position, skills, location, office, seniority, experience_years, email, summary, summary_embedding) VALUES (${
+        profile.id
+      }, ${profile.name}, ${profile.position}, ${sql.array(profile.skills)}, ${
+        profile.location
+      }, ${profile.office}, ${profile.seniority}, ${profile.experience_years}, ${
+        profile.email
+      }, ${profile.summary}, ${JSON.stringify(embedding)})
+    `;
+  }
+};
+
+const processRecordsInBatches = async (
+  records: Records<FieldSet>,
+  logs: SeedLog[],
+) => {
+  let processedCount = 0;
+  const totalBatches = Math.ceil(records.length / BATCH_SIZE);
+
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+
+    logs.push({
+      message: `Processing batch ${batchNumber}/${totalBatches} (${batch.length} records)...`,
+    });
+
+    // Prepare batch data
+    const batchData = batch.map((record) => {
+      const fields = record.fields as Profile['fields'];
+
+      const profile = {
+        id: record.id,
+        name: fields['Full Name'] || 'N/A',
+        position: fields['Position'] || fields['Job'] || 'N/A',
+        skills: fields['Skills'] || [],
+        location: fields['Location'] || 'N/A',
+        office: fields['Office'] || 'N/A',
+        seniority: fields['Seniority'] || 'N/A',
+        experience_years: fields['Duration'] || 'N/A',
+        email: fields['Email'] || 'N/A',
+        summary: '',
+      };
+
+      const summary = `
+Professional Profile: ${profile.name}
+- Job Title: ${profile.position}
+- Location: ${profile.office}, ${profile.location}
+- Seniority Level: ${profile.seniority}
+- Years of Experience: ${profile.experience_years}
+`;
+
+      profile.summary = summary
+        .replace(/\s*\n\s*/g, ' ') // replace newlines with spaces
+        .trim();
+
+      return profile;
+    });
+
+    //Generate embeddings for the entire batch using Vercel AI SDK
+    const batchContents = batchData.map((item) => item.summary);
+    const { embeddings } = await embedMany({
+      model: google.textEmbeddingModel(EMBEDDING_MODEL),
+      values: batchContents,
+    });
+
+    // Insert all records from the batch into the database at once
+    await insertManyRecords(batchData, embeddings);
+
+    processedCount += batch.length;
+    logs.push({
+      message: `✓ Processed batch ${batchNumber}/${totalBatches} (${processedCount}/${records.length})`,
+    });
+
+    if (i + BATCH_SIZE < records.length) {
+      logs.push({
+        message: `Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`,
+      });
+      await new Promise((resolve) =>
+        setTimeout(resolve, DELAY_BETWEEN_BATCHES),
       );
     }
+  }
+
+  logs.push({
+    message: `✅ Successfully seeded/updated ${processedCount} employee profiles.`,
+  });
+
+  return {
+    processedCount,
+  };
+};
+
+export async function GET() {
+  const logs: SeedLog[] = [];
+  try {
+    const { missingEnvVars, hasMissing } = checkEnvVars();
+
+    if (hasMissing) {
+      return Response.json(
+        {
+          error: `Missing required environment variables: ${missingEnvVars}`,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    // Generate initial tables
+    await generateInitialTables(logs);
 
     // Fetch records from Airtable
-    logs.push('Fetching records from Airtable...');
-    const records = await airtable(AIRTABLE_TABLE_ID!).select().all();
-    logs.push(`Fetched ${records.length} records.`);
-
-    // Filter active records first
-    const activeRecords = records.filter(
-      (record) =>
-        record.fields['Full Name'] && record.fields['Status'] === 'Active'
-    );
-    const skippedCount = records.length - activeRecords.length;
-    logs.push(
-      `Filtered to ${activeRecords.length} active records (${skippedCount} skipped).`
-    );
+    const records = await getAirtableData(logs);
 
     // Process records in batches
-    logs.push(
-      `Processing records in batches of ${BATCH_SIZE} with rate limit handling...`
-    );
-    let processedCount = 0;
-    const totalBatches = Math.ceil(activeRecords.length / BATCH_SIZE);
-
-    for (let i = 0; i < activeRecords.length; i += BATCH_SIZE) {
-      const batch = activeRecords.slice(i, i + BATCH_SIZE);
-      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
-
-      logs.push(
-        `Processing batch ${batchNumber}/${totalBatches} (${batch.length} records)...`
-      );
-
-      // Prepare batch data (content, metadata, record IDs)
-      const batchData = batch.map((record) => {
-        const fields = record.fields as Record<string, string[]>;
-
-        const content = `
-    Professional Profile: ${fields['Full Name'] || 'N/A'}, ${
-          fields['Position'] || fields['Job'] || 'N/A'
-        }, Seniority: ${fields['Seniority'] || 'N/A'}
-
-    Summary:
-    ${fields['About you'] || 'No personal summary provided.'}
-
-    Core Role:
-    - Job Title: ${fields['Position'] || fields['Job'] || 'N/A'}
-    - Department: ${fields['Area'] || 'N/A'}
-    - Seniority Level: ${fields['Seniority'] || 'N/A'}
-    - Contract Type: ${fields['Type of Contract']?.join(', ') || 'N/A'}
-
-    Technical Skills:
-    - Primary Skills: ${
-      fields['Skills']?.join(', ') || 'No technical skills listed.'
-    }
-
-    Education:
-    - University: ${fields['University'] || 'N/A'}
-    - Degree: ${fields['Career'] || 'N/A'}
-    - Status: ${fields['Career status'] || 'N/A'}
-        `
-          .trim()
-          .replace(/\n\s+/g, '\n');
-
-        const metadata = {
-          record_id: record.id,
-          full_name: fields['Full Name'] || null,
-          email: fields['Email'] || null,
-          status: fields['Status'] || null,
-          area: fields['Area'] || null,
-          job_title: fields['Position'] || fields['Job'] || null,
-          seniority: fields['Seniority'] || null,
-          location: fields['Location'] || null,
-          office: fields['Office'] || null,
-          profile_picture_url:
-            // @ts-expect-error thumbnails exist
-            fields['Profile Picture']?.[0]?.thumbnails?.large?.url || null,
-        };
-
-        return {
-          recordId: record.id,
-          content,
-          metadata,
-          fullName: fields['Full Name'],
-        };
-      });
-
-      // Generate embeddings for the entire batch using Vercel AI SDK
-      const batchContents = batchData.map((item) => item.content);
-      const { embeddings } = await embedMany({
-        model: google.textEmbeddingModel(EMBEDDING_MODEL),
-        values: batchContents,
-      });
-
-      // Insert all records from the batch into the database
-      for (let j = 0; j < batchData.length; j++) {
-        const { recordId, content, metadata, fullName } = batchData[j];
-        const embedding = embeddings[j];
-
-        await sql`
-          INSERT INTO employee_profiles_techmatch (record_id, content, metadata, embedding)
-          VALUES (${recordId}, ${content}, ${JSON.stringify(
-          metadata
-        )}, ${JSON.stringify(embedding)})
-          ON CONFLICT (record_id) DO UPDATE SET
-            content = EXCLUDED.content,
-            metadata = EXCLUDED.metadata,
-            embedding = EXCLUDED.embedding;
-        `;
-
-        processedCount++;
-        logs.push(
-          `✓ Processed ${fullName} (${processedCount}/${activeRecords.length})`
-        );
-      }
-
-      // Add delay between batches to avoid rate limits
-      if (i + BATCH_SIZE < activeRecords.length) {
-        logs.push(`Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`);
-        await sleep(DELAY_BETWEEN_BATCHES);
-      }
-    }
-
-    logs.push(
-      `✅ Successfully seeded/updated ${processedCount} employee profiles (${skippedCount} skipped).`
-    );
+    const { processedCount } = await processRecordsInBatches(records, logs);
 
     return NextResponse.json(
       {
         success: true,
         message: `Successfully seeded ${processedCount} employee profiles`,
         processed: processedCount,
-        skipped: skippedCount,
         total: records.length,
         logs,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    console.error('❌ An error occurred during seeding:', error);
+    logs.push({
+      error: 'An error occurred during seeding',
+      reason: error instanceof Error ? error.message : 'Unknown error',
+    });
     return NextResponse.json(
       {
         error: 'Failed to seed database',
         details: error instanceof Error ? error.message : 'Unknown error',
+        logs,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
