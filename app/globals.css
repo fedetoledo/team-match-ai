@@ -189,7 +189,7 @@ body {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #00deda;
+  --primary: #69c6e1;
   --primary-light: #99f2f0;
   --primary-dark: #15847f;
   --secondary: oklch(0.97 0 0);
@@ -200,8 +200,7 @@ body {
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
-  --input: var(--color-slate-200)
-  --ring: oklch(0.708 0 0);
+  --input: var(--color-slate-200) --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -224,7 +223,7 @@ body {
   --palette-black: #050b0d;
   --palette-fondo: #091d2a;
 
-  --palette-gradient: linear-gradient(83deg, #07dfd8, #9aeca9);
+  --palette-gradient: linear-gradient(83deg, #07bbdf, #e78bd6);
 }
 
 .dark {
@@ -270,6 +269,6 @@ body {
   }
 }
 
-@utility sirius-gradient {
+@utility text-gradient {
   background-image: var(--palette-gradient);
 }
