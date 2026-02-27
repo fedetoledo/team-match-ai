@@ -1,77 +1,17 @@
-// @ts-strict-ignore
 import { NextResponse } from 'next/server';
-import Airtable, { FieldSet, Records } from 'airtable';
 import { google } from '@ai-sdk/google';
 import { embedMany } from 'ai';
 import { sql } from '@/lib/db';
+import { fakeProfiles, FakeProfile } from '@/lib/data/fake-profiles';
+import { DEFAULT_EMBEDDING_MODEL_NAME } from '@/lib/constants';
+import { BATCH_SIZE, DELAY_BETWEEN_BATCHES, SeedLog } from './utils';
 
-const EMBEDDING_MODEL = 'text-embedding-004';
-const BATCH_SIZE = 10; // Process 10 records at a time (Gemini has higher limits)
-const DELAY_BETWEEN_BATCHES = 500; // 500ms delay between batches
-
-interface Profile {
-  id: string;
-  fields: {
-    Surname: string;
-    Hours: number;
-    'Selling Category': string;
-    Job: string;
-    Status: string;
-    'Sell Hours': string;
-    Location: string;
-    Email: string;
-    'Starting Date': string;
-    Seniority: string;
-    'Birth Date': string;
-    'Days of Presenteeism': string[];
-    Skills: string[];
-    Name: string;
-    Duration: string;
-    Area: string;
-    'Full Name': string;
-    Office: string;
-    Position: string;
-    'Seniority Cat': string;
-    Age: number;
-    DNI: string;
-    CUIL: string;
-    'Profile Picture': Array<{
-      id: string;
-      url: string;
-      filename: string;
-      size: number;
-      type: string;
-      thumbnails: {
-        small: { url: string; width: number; height: number };
-        large: { url: string; width: number; height: number };
-        full: { url: string; width: number; height: number };
-      };
-    }>;
-  };
-}
-
-type SeedLog =
-  | {
-      error: string;
-      reason: string;
-    }
-  | {
-      message: string;
-    };
-
-const {
-  AIRTABLE_API_KEY,
-  AIRTABLE_BASE_ID,
-  AIRTABLE_TABLE_ID,
-  GOOGLE_GENERATIVE_AI_API_KEY,
-} = process.env;
+const { GOOGLE_GENERATIVE_AI_API_KEY, EMPLOYEE_PROFILE_TABLE } = process.env;
 
 const checkEnvVars = () => {
   const missingVars = [
-    !AIRTABLE_API_KEY && 'AIRTABLE_API_KEY',
-    !AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
-    !AIRTABLE_TABLE_ID && 'AIRTABLE_TABLE_ID',
     !GOOGLE_GENERATIVE_AI_API_KEY && 'GOOGLE_GENERATIVE_AI_API_KEY',
+    !EMPLOYEE_PROFILE_TABLE && 'EMPLOYEE_PROFILE_TABLE',
   ]
     .filter(Boolean)
     .join(', ');
@@ -82,31 +22,15 @@ const checkEnvVars = () => {
   };
 };
 
-const getAirtableData = async (logs: SeedLog[]) => {
-  // Initialize clients
-  const airtable = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(
-    AIRTABLE_BASE_ID!,
-  );
-
-  logs.push({ message: 'Fetching records from Airtable...' });
-  const records = await airtable(AIRTABLE_TABLE_ID!)
-    .select({
-      filterByFormula: "Status = 'Active'",
-    })
-    .all();
-  logs.push({ message: `Fetched ${records.length} records.` });
-
-  return records.filter((record) => record.fields['Status'] === 'Active');
-};
-
 const generateInitialTables = async (logs: SeedLog[]) => {
   // Enable the pgvector extension
   await sql`CREATE EXTENSION IF NOT EXISTS vector`;
   logs.push({ message: '✓ Enabled pgvector extension.' });
 
-  // Create the table to store the data and embeddings
+  // Drop and recreate the table to ensure correct schema
+  await sql`DROP TABLE IF EXISTS ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)}`;
   await sql`
-      CREATE TABLE IF NOT EXISTS employee_profiles_techmatch (
+      CREATE TABLE ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)} (
         id SERIAL PRIMARY KEY,
         record_id TEXT UNIQUE,
         name TEXT,
@@ -118,9 +42,13 @@ const generateInitialTables = async (logs: SeedLog[]) => {
         experience_years TEXT,
         email TEXT,
         summary TEXT,
-        summary_embedding VECTOR(768)
+        summary_embedding VECTOR(3072)
       );
     `;
+
+  logs.push({
+    message: `✓ Created ${process.env.EMPLOYEE_PROFILE_TABLE} table.`,
+  });
 
   await sql`
     CREATE TABLE IF NOT EXISTS record_search (
@@ -129,11 +57,13 @@ const generateInitialTables = async (logs: SeedLog[]) => {
       response TEXT,
       input_tokens INTEGER,
       output_tokens INTEGER,
-      username TEXT default 'federico',
+      username TEXT default 'demo',
       model_used TEXT default 'gemini-2.5-flash-lite',
       created_at TIMESTAMP DEFAULT NOW()
     );
     `;
+
+  logs.push({ message: '✓ Created record_search table.' });
 };
 
 interface ProcessedProfile {
@@ -158,7 +88,7 @@ const insertManyRecords = async (
     const embedding = embeddings[i];
 
     await sql`
-      INSERT INTO employee_profiles_techmatch (record_id, name, position, skills, location, office, seniority, experience_years, email, summary, summary_embedding) VALUES (${
+      INSERT INTO ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)} (record_id, name, position, skills, location, office, seniority, experience_years, email, summary, summary_embedding) VALUES (${
         profile.id
       }, ${profile.name}, ${profile.position}, ${sql.array(profile.skills)}, ${
         profile.location
@@ -170,7 +100,7 @@ const insertManyRecords = async (
 };
 
 const processRecordsInBatches = async (
-  records: Records<FieldSet>,
+  records: FakeProfile[],
   logs: SeedLog[],
 ) => {
   let processedCount = 0;
@@ -185,41 +115,37 @@ const processRecordsInBatches = async (
     });
 
     // Prepare batch data
-    const batchData = batch.map((record) => {
-      const fields = record.fields as Profile['fields'];
-
-      const profile = {
-        id: record.id,
-        name: fields['Full Name'] || 'N/A',
-        position: fields['Position'] || fields['Job'] || 'N/A',
-        skills: fields['Skills'] || [],
-        location: fields['Location'] || 'N/A',
-        office: fields['Office'] || 'N/A',
-        seniority: fields['Seniority'] || 'N/A',
-        experience_years: fields['Duration'] || 'N/A',
-        email: fields['Email'] || 'N/A',
+    const batchData = batch.map((profile) => {
+      const processedProfile = {
+        id: profile.id,
+        name: profile.name,
+        position: profile.position,
+        skills: profile.skills,
+        location: profile.location,
+        office: profile.office,
+        seniority: profile.seniority,
+        experience_years: profile.experience_years,
+        email: profile.email,
         summary: '',
       };
 
       const summary = `
-Professional Profile: ${profile.name}
-- Job Title: ${profile.position}
-- Location: ${profile.office}, ${profile.location}
-- Seniority Level: ${profile.seniority}
-- Years of Experience: ${profile.experience_years}
+Professional Profile: ${processedProfile.name}
+- Job Title: ${processedProfile.position}
+- Location: ${processedProfile.office}, ${processedProfile.location}
+- Seniority Level: ${processedProfile.seniority}
+- Years of Experience: ${processedProfile.experience_years}
 `;
 
-      profile.summary = summary
-        .replace(/\s*\n\s*/g, ' ') // replace newlines with spaces
-        .trim();
+      processedProfile.summary = summary.replace(/\s*\n\s*/g, ' ').trim();
 
-      return profile;
+      return processedProfile;
     });
 
-    //Generate embeddings for the entire batch using Vercel AI SDK
+    // Generate embeddings for the entire batch using Vercel AI SDK
     const batchContents = batchData.map((item) => item.summary);
     const { embeddings } = await embedMany({
-      model: google.textEmbeddingModel(EMBEDDING_MODEL),
+      model: google.textEmbeddingModel(DEFAULT_EMBEDDING_MODEL_NAME),
       values: batchContents,
     });
 
@@ -269,18 +195,20 @@ export async function GET() {
     // Generate initial tables
     await generateInitialTables(logs);
 
-    // Fetch records from Airtable
-    const records = await getAirtableData(logs);
+    logs.push({ message: `Loading ${fakeProfiles.length} fake profiles...` });
 
     // Process records in batches
-    const { processedCount } = await processRecordsInBatches(records, logs);
+    const { processedCount } = await processRecordsInBatches(
+      fakeProfiles,
+      logs,
+    );
 
     return NextResponse.json(
       {
         success: true,
         message: `Successfully seeded ${processedCount} employee profiles`,
         processed: processedCount,
-        total: records.length,
+        total: fakeProfiles.length,
         logs,
       },
       { status: 200 },
@@ -293,7 +221,8 @@ export async function GET() {
     return NextResponse.json(
       {
         error: 'Failed to seed database',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details:
+          error instanceof Error ? JSON.stringify(error) : 'Unknown error',
         logs,
       },
       { status: 500 },

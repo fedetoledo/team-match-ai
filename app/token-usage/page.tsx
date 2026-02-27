@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Settings2 } from 'lucide-react';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { HistoryList } from './components/list';
 
@@ -23,9 +22,7 @@ export interface QueryHistory {
 }
 
 const TokenUsage = async () => {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get('session')?.value;
-  const username = sessionId ? sessionId.split('-')[0] : 'guest';
+  const username = 'demo';
 
   const data = await fetch(`${process.env.API_BASE_URL}/history`, {
     method: 'POST',
@@ -44,51 +41,50 @@ const TokenUsage = async () => {
   // Sort by created_at (newest first)
   const sortedHistory = [...tokenUsage].sort(
     (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
   return (
-    <div className='min-h-screen bg-bg p-4'>
-      <nav className='max-w-7xl mx-auto flex justify-between items-center w-full z-20 bg-bg/60 backdrop-blur-lg px-4 mb-10'>
+    <div className="min-h-screen bg-bg p-4">
+      <nav className="max-w-7xl mx-auto flex justify-between items-center w-full z-20 bg-bg/60 backdrop-blur-lg px-4 mb-10">
         <div>
-          <h1 className='md:text-3xl text-2xl font-extrabold sirius-gradient inline-block bg-clip-text text-transparent font-inter tracking-tight'>
-            TechMatch Bot
+          <h1 className="md:text-3xl text-2xl font-extrabold text-primary inline-block font-inter tracking-tight">
+            HR AI Assistant
           </h1>
-          <h2 className='text-gray-400'>
-            Intelligent Technical Resource Assignment Agent
+          <h2 className="text-gray-400">
+            Intelligent Technical Recruiting Agent
           </h2>
         </div>
 
-        <div className='flex gap-4'>
+        <div className="flex gap-4">
           <DropdownMenu>
-            <DropdownMenuTrigger className='uppercase font-medium text-slate-300 text-sm flex items-center gap-2 cursor-pointer hover:text-primary/90 transition-colors'>
+            <DropdownMenuTrigger className="uppercase font-medium text-slate-300 text-sm flex items-center gap-2 cursor-pointer hover:text-primary/90 transition-colors">
               <Settings2 size={16} />
               <span>Menu</span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel className='uppercase'>Menu</DropdownMenuLabel>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="uppercase">Menu</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href='/chat'>Chat</Link>
+                <Link href="/chat">Chat</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href='/token-usage'>Token Usage</Link>
+                <Link href="/token-usage">Token Usage</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </nav>
 
-      <div className='max-w-4xl mx-auto'>
-        <h1 className='text-3xl font-bold text-main-light-blue mb-8'>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-main-light-blue mb-8">
           Search History
         </h1>
 
         {sortedHistory.length === 0 ? (
-          <p className='text-gray-400'>No searches recorded.</p>
+          <p className="text-gray-400">No searches recorded.</p>
         ) : (
-          <div className='space-y-4'>
+          <div className="space-y-4">
             <HistoryList items={sortedHistory} />
           </div>
         )}
