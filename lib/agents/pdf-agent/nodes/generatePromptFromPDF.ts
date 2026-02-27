@@ -15,7 +15,7 @@ export const generatePromptFromPDF = async (
           content: [
             {
               type: 'text',
-              text: `Read the attached job description PDF and summarize it in Spanish, in the style of: "Necesito desarrollador experto en React y Tailwind".`,
+              text: `Read the attached job description PDF and summarize it in English, in the style of: "Looking for a senior React developer with Tailwind experience".`,
             },
             {
               type: 'file',
