@@ -18,7 +18,7 @@ export const ImageWithFallback = ({
   if (hasError) {
     return (
       <div className={`${className} flex items-center justify-center `}>
-        <span className='sirius-gradient bg-clip-text text-transparent font-semibold tracking-widest'>
+        <span className="text-gradient bg-clip-text text-transparent font-semibold tracking-widest">
           {fallbackText}
         </span>
       </div>
