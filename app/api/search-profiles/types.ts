@@ -1,10 +1,13 @@
 export interface Profile {
-  content: string;
-  metadata: {
-    email?: string;
-    location?: string;
-    office?: string;
-    profile_picture_url?: string;
-  };
+  record_id: string;
+  name: string;
+  position: string;
+  skills: string[];
+  location: string;
+  office: string;
+  seniority: string;
+  experience_years: string;
+  email: string;
+  summary: string;
   similarity: number;
 }
