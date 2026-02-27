@@ -24,7 +24,7 @@ interface TechMatchInputProps {
   isProcessingPdf: boolean;
 }
 
-export function TechMatchInput({
+export function SearchInput({
   onSubmit,
   onStop,
   isLoading,
@@ -66,21 +66,21 @@ export function TechMatchInput({
 
   return (
     <form
-      className='max-w-4xl mx-auto w-full flex flex-col gap-2'
+      className="max-w-4xl mx-auto w-full flex flex-col gap-2"
       onSubmit={async (e) => {
         e.preventDefault();
         e.stopPropagation();
       }}
     >
-      <div className='p-3 bg-slate-700/20 backdrop-blur-lg rounded-2xl flex flex-col gap-3 border border-slate-700 overflow-hidden relative'>
+      <div className="p-3 bg-slate-700/20 backdrop-blur-lg rounded-2xl flex flex-col gap-3 border border-slate-700 overflow-hidden relative">
         <input
-          type='file'
+          type="file"
           ref={fileInputRef}
-          className='hidden'
+          className="hidden"
           onChange={handleFileChange}
-          accept='application/pdf'
+          accept="application/pdf"
         />
-        <div className='relative w-full'>
+        <div className="relative w-full">
           {/* Input */}
           <textarea
             onKeyDown={handleKeyDown}
@@ -91,25 +91,23 @@ export function TechMatchInput({
               'resize-none max-h-32 border-none outline-none w-full relative z-10 bg-transparent field-sizing-content',
               selectedFile || isProcessingPdf
                 ? 'pl-0 cursor-not-allowed'
-                : 'pl-2'
+                : 'pl-2',
             )}
             placeholder={
-              selectedFile || isLoading
-                ? ''
-                : 'Enter the job requirements'
+              selectedFile || isLoading ? '' : 'Enter the job requirements'
             }
             disabled={!!selectedFile || isProcessingPdf} // disable typing if file is selected or processing
           />
 
           {/* File card overlay */}
           {selectedFile && (
-            <div className='absolute left-0 top-1/2 -translate-y-1/2 flex items-center bg-slate-600/80 text-slate-300 px-3 py-1 rounded-full gap-2 shadow-md z-20 pointer-events-auto'>
-              <span className='text-sm font-medium truncate max-w-xs'>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center bg-slate-600/80 text-slate-300 px-3 py-1 rounded-full gap-2 shadow-md z-20 pointer-events-auto">
+              <span className="text-sm font-medium truncate max-w-xs">
                 {selectedFile.name}
               </span>
               <button
-                type='button'
-                className='text-slate-400 hover:text-red-400 font-bold cursor-pointer'
+                type="button"
+                className="text-slate-400 hover:text-red-400 font-bold cursor-pointer"
                 onClick={() => setSelectedFile(null)}
               >
                 ×
@@ -118,16 +116,16 @@ export function TechMatchInput({
           )}
         </div>
 
-        <div className='flex justify-between items-center'>
-          <div className='flex items-center gap-4'>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
             <Tooltip>
               <TooltipTrigger asChild onClick={handleFileClick}>
                 <div
                   className={cn(
-                    'border cursor-pointer border-slate-600 rounded-full p-2 transition-all hover:scale-110 hover:shadow-[0_0_3px_0] hover:shadow-slate-400'
+                    'border cursor-pointer border-slate-600 rounded-full p-2 transition-all hover:scale-110 hover:shadow-[0_0_3px_0] hover:shadow-slate-400',
                   )}
                 >
-                  <FilePlus size={20} className='text-slate-300' />
+                  <FilePlus size={20} className="text-slate-300" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>Upload PDF</TooltipContent>
@@ -151,15 +149,15 @@ export function TechMatchInput({
                       onStop();
                     }
                   }}
-                  type='button'
-                  className='border cursor-pointer rounded-full p-2 border-slate-600 hover:scale-110 hover:shadow-[0_0_5px_0] hover:shadow-slate-400 transition-all'
+                  type="button"
+                  className="border cursor-pointer rounded-full p-2 border-slate-600 hover:scale-110 hover:shadow-[0_0_5px_0] hover:shadow-slate-400 transition-all"
                   disabled={isProcessingPdf}
                 >
-                  <Square size={20} className='text-slate-300' />
+                  <Square size={20} className="text-slate-300" />
                 </button>
               ) : (
                 <button
-                  type='button'
+                  type="button"
                   onClick={() =>
                     onSubmit({ input: query, file: selectedFile || undefined })
                   }
@@ -169,10 +167,10 @@ export function TechMatchInput({
                       'opacity-60 cursor-not-allowed hover:animate-shake',
                     !isProcessingPdf &&
                       !isInputEmpty &&
-                      'hover:scale-110 hover:shadow-[0_0_5px_0] hover:shadow-slate-400'
+                      'hover:scale-110 hover:shadow-[0_0_5px_0] hover:shadow-slate-400',
                   )}
                 >
-                  <ArrowUp size={20} className='text-slate-200' />
+                  <ArrowUp size={20} className="text-slate-200" />
                 </button>
               )}
             </TooltipTrigger>
@@ -187,17 +185,17 @@ export function TechMatchInput({
         <div
           className={cn(
             'bg-linear-to-r from-primary to-lime-200 h-full w-full absolute top-full blur-xl rounded-full left-1/2 -translate-x-1/2 -z-10 transition-all duration-500 ease-in-out',
-            isLoading ? 'animate-pulse -translate-y-3' : 'translate-y-10'
+            isLoading ? 'animate-pulse -translate-y-3' : 'translate-y-10',
           )}
         />
       </div>
 
-      <div className='self-end'>
-        <KbdGroup className='text-sm flex items-center'>
+      <div className="self-end">
+        <KbdGroup className="text-sm flex items-center">
           <Kbd>⌘</Kbd>
-          <span className='leading-0 text-gray-500'>+</span>
+          <span className="leading-0 text-gray-500">+</span>
           <Kbd>Enter</Kbd>
-          <span className='leading-0 text-gray-500'>Send question</span>
+          <span className="leading-0 text-gray-500">Search candidates</span>
         </KbdGroup>
       </div>
     </form>
