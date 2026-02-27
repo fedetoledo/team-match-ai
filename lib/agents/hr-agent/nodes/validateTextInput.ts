@@ -3,7 +3,7 @@ import { getSelectedModelServer } from '@/lib/llm_model';
 import { HRAgentStateType, HRAgentNode } from '../graph';
 
 export const validateTextInput = async (
-  state: HRAgentStateType
+  state: HRAgentStateType,
 ): Promise<HRAgentStateType> => {
   if (!state.input || typeof state.input !== 'string') {
     return {
@@ -18,7 +18,7 @@ export const validateTextInput = async (
 
   const { text, usage } = await generateText({
     model,
-    prompt: `You are validating user text input. The input must be referring to a software developer job description.
+    prompt: `You are validating user text input. The input must be referring to a software (frontend, backend, devops, infra, fullstack, or related) job description.
 If the input is valid, respond ONLY with "yes". If the input is invalid, respond with a brief reason why is not valid.
 
 User Input: "${state.input}"`,

@@ -13,20 +13,19 @@ export const buildContext = (state: HRAgentStateType): HRAgentStateType => {
 const buildProfileContext = (profile: Profile, index: number) => {
   const similarityScore = (profile.similarity * 100).toFixed(1);
 
-  const metadata =
-    typeof profile.metadata === 'string'
-      ? JSON.parse(profile.metadata)
-      : profile.metadata;
-
   return `
     Profile ${index + 1}:
-    ${profile.content}
+    ${profile.summary}
 
-    Additional Metadata:
-    - Email: ${metadata.email || 'N/A'}
-    - Location: ${metadata.location || 'N/A'}
-    - Office: ${metadata.office || 'N/A'}
-    - Profile Picture URL: ${metadata.profile_picture_url || 'N/A'}
+    Details:
+    - Name: ${profile.name}
+    - Position: ${profile.position}
+    - Seniority: ${profile.seniority}
+    - Experience: ${profile.experience_years}
+    - Skills: ${profile.skills?.join(', ') || 'N/A'}
+    - Email: ${profile.email || 'N/A'}
+    - Location: ${profile.location || 'N/A'}
+    - Office: ${profile.office || 'N/A'}
     - Similarity Score: ${similarityScore}%
     --------------------
   `;
