@@ -13,9 +13,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'TechMatch Agent',
+  title: 'HR AI Assistant',
   description:
-    'TechMatch Agent is a platform that helps you find the candidates for the job.',
+    'HR AI Assistant is a platform that helps you find the best candidates for the job.',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html lang="en">
       <body className={`${inter.variable} ${poppins.className} antialiased`}>
         {children}
         <Toaster />
