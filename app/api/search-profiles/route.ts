@@ -2,7 +2,6 @@ import { hrAgent } from '@/lib/agents/hr-agent/graph';
 import { streamObject } from 'ai';
 import { getSelectedModelServer } from '@/lib/llm_model';
 import { profileSchema } from './schema';
-import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +12,7 @@ export async function POST(req: Request) {
     if (agentResult.error) {
       return Response.json(
         { error: 'Agent processing error', details: agentResult.error },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -26,9 +25,6 @@ export async function POST(req: Request) {
       schema: profileSchema,
       temperature: 0,
       onFinish: async ({ usage }) => {
-        const cookieStore = await cookies();
-        const sessionId = cookieStore.get('session');
-
         fetch(`${process.env.API_BASE_URL}/record-search`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -41,23 +37,23 @@ export async function POST(req: Request) {
             outputTokens:
               (agentResult.tokenUsage?.outputTokens || 0) +
               (usage.outputTokens || 0),
-            username: sessionId ? sessionId.value.split('-')[0] : 'guest',
+            username: 'demo',
             modelUsed: model.modelId,
           }),
         });
       },
-      prompt: `Estructura la información de los siguientes perfiles de desarrolladores en formato JSON.
+      prompt: `Structure the following developer profiles information into JSON format.
 
-Perfiles encontrados:
+Profiles found:
 ${agentResult.context}
 
-Reglas para estructurar la información:
-- Solo puedes usar los perfiles que se encuentran en la lista anterior.
-- No puede inventar información de los perfiles si no está en la lista.
-- Si el campo "summary" está vacío, agrega un resumen de por qué el perfil es un buen candidato para el puesto. Intenta no listar las skills solamente. Utiliza el seniority y skills también para el resumen.
-- Devuelve un array de objetos JSON.
-- Cada objeto representa un perfil de desarrollador.
-- Si no hay perfiles, devuelve un array vacío: [].
+Rules for structuring the information:
+- You can only use the profiles from the list above.
+- Do not invent or make up profile information that is not in the list.
+- If the "summary" field is empty, add a summary explaining why the profile is a good candidate for the position. Try not to just list the skills. Use seniority and skills together for the summary.
+- Return an array of JSON objects.
+- Each object represents a developer profile.
+- If there are no profiles, return an empty array: [].
 `,
     });
 
@@ -70,7 +66,7 @@ Reglas para estructurar la información:
         error: 'Error processing search request',
         message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }
