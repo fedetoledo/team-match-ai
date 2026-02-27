@@ -43,11 +43,21 @@ const workflow = new StateGraph(PdfAgentState)
   .addNode(PdfAgentNode.GenerateUserPromptFromPDF, generatePromptFromPDF)
 
   .addEdge(START, PdfAgentNode.ValidateFileExists)
-  .addEdge(PdfAgentNode.ValidateFileExists, PdfAgentNode.ValidateFileSize)
-  .addEdge(PdfAgentNode.ValidateFileSize, PdfAgentNode.ValidateMimeType)
-  .addEdge(PdfAgentNode.ValidateMimeType, PdfAgentNode.ConvertFileToBuffer)
-  .addEdge(PdfAgentNode.ConvertFileToBuffer, PdfAgentNode.ValidateContent)
-  .addEdge(PdfAgentNode.ValidateContent, PdfAgentNode.GenerateUserPromptFromPDF)
+  .addConditionalEdges(PdfAgentNode.ValidateFileExists, (state) =>
+    state.error ? END : PdfAgentNode.ValidateFileSize,
+  )
+  .addConditionalEdges(PdfAgentNode.ValidateFileSize, (state) =>
+    state.error ? END : PdfAgentNode.ValidateMimeType,
+  )
+  .addConditionalEdges(PdfAgentNode.ValidateMimeType, (state) =>
+    state.error ? END : PdfAgentNode.ConvertFileToBuffer,
+  )
+  .addConditionalEdges(PdfAgentNode.ConvertFileToBuffer, (state) =>
+    state.error ? END : PdfAgentNode.ValidateContent,
+  )
+  .addConditionalEdges(PdfAgentNode.ValidateContent, (state) =>
+    state.error ? END : PdfAgentNode.GenerateUserPromptFromPDF,
+  )
   .addEdge(PdfAgentNode.GenerateUserPromptFromPDF, END);
 
 export const pdfAgent = workflow.compile();

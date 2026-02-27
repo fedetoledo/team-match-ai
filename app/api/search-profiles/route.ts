@@ -40,7 +40,9 @@ export async function POST(req: Request) {
             username: 'demo',
             modelUsed: model.modelId,
           }),
-        });
+        }).catch((err) =>
+          console.error('Failed to record search:', err),
+        );
       },
       prompt: `Structure the following developer profiles information into JSON format.
 

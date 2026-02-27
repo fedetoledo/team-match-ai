@@ -30,9 +30,15 @@ const workflow = new StateGraph(HRAgentState)
   .addNode(HRAgentNode.BuildContext, buildContext)
 
   .addEdge(START, HRAgentNode.ValidateTextInput)
-  .addEdge(HRAgentNode.ValidateTextInput, HRAgentNode.GenerateInputEmbedding)
-  .addEdge(HRAgentNode.GenerateInputEmbedding, HRAgentNode.GetMatchingProfiles)
-  .addEdge(HRAgentNode.GetMatchingProfiles, HRAgentNode.BuildContext)
+  .addConditionalEdges(HRAgentNode.ValidateTextInput, (state) =>
+    state.error ? END : HRAgentNode.GenerateInputEmbedding,
+  )
+  .addConditionalEdges(HRAgentNode.GenerateInputEmbedding, (state) =>
+    state.error ? END : HRAgentNode.GetMatchingProfiles,
+  )
+  .addConditionalEdges(HRAgentNode.GetMatchingProfiles, (state) =>
+    state.error ? END : HRAgentNode.BuildContext,
+  )
   .addEdge(HRAgentNode.BuildContext, END);
 
 export const hrAgent = workflow.compile();

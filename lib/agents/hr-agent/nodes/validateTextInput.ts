@@ -14,36 +14,45 @@ export const validateTextInput = async (
     };
   }
 
-  const model = await getSelectedModelServer();
+  try {
+    const model = await getSelectedModelServer();
 
-  const { text, usage } = await generateText({
-    model,
-    prompt: `You are validating user text input. The input must be referring to a software (frontend, backend, devops, infra, fullstack, or related) job description.
+    const { text, usage } = await generateText({
+      model,
+      prompt: `You are validating user text input. The input must be referring to a software (frontend, backend, devops, infra, fullstack, or related) job description.
 If the input is valid, respond ONLY with "yes". If the input is invalid, respond with a brief reason why is not valid.
 
 User Input: "${state.input}"`,
-  });
+    });
 
-  const isValid = text.toLowerCase().includes('yes');
+    const isValid = text.toLowerCase().includes('yes');
 
-  if (!isValid) {
+    if (!isValid) {
+      return {
+        validation: { isValid: false },
+        error: {
+          step: HRAgentNode.ValidateTextInput,
+          reason: text.trim(),
+        },
+      };
+    }
+
     return {
-      validation: { isValid: false },
+      validation: { isValid: true },
+      tokenUsage: {
+        ...state.tokenUsage,
+        inputTokens:
+          (state.tokenUsage?.inputTokens || 0) + (usage.inputTokens || 0),
+        outputTokens:
+          (state.tokenUsage?.outputTokens || 0) + (usage.outputTokens || 0),
+      },
+    };
+  } catch (error) {
+    return {
       error: {
+        reason: `Input validation failed: ${(error as Error).message}`,
         step: HRAgentNode.ValidateTextInput,
-        reason: text.trim(),
       },
     };
   }
-
-  return {
-    validation: { isValid: true },
-    tokenUsage: {
-      ...state.tokenUsage,
-      inputTokens:
-        (state.tokenUsage?.inputTokens || 0) + (usage.inputTokens || 0),
-      outputTokens:
-        (state.tokenUsage?.outputTokens || 0) + (usage.outputTokens || 0),
-    },
-  };
 };

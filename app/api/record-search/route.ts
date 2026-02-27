@@ -13,6 +13,12 @@ export async function POST(req: Request) {
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error('Error storing record search:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return Response.json(
+      {
+        error: 'Failed to record search',
+        message: (error as Error).message,
+      },
+      { status: 500 },
+    );
   }
 }
