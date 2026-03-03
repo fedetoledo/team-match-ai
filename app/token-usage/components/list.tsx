@@ -2,7 +2,7 @@
 
 import { hidden, list, springTransition, visible } from '@/app/chat/animations';
 import { motion } from 'motion/react';
-import { QueryHistory } from '../page';
+import { QueryHistory } from '@/lib/history';
 import { LLM_MODEL, modelCost } from '@/lib/llm_model';
 
 interface HistoryListProps {

@@ -6,37 +6,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getSearchHistory } from '@/lib/history';
 import { Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { HistoryList } from './components/list';
 
-export interface QueryHistory {
-  id: number;
-  query: string;
-  response: string;
-  input_tokens: number;
-  output_tokens: number;
-  username: string;
-  created_at: string;
-  model_used: string;
-}
-
 const TokenUsage = async () => {
-  const username = 'demo';
-
-  const data = await fetch(`${process.env.API_BASE_URL}/history`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ username }),
-  });
-
-  if (!data.ok) {
-    throw new Error('Failed to fetch token usage data');
-  }
-
-  const tokenUsage: QueryHistory[] = await data.json();
+  const tokenUsage = await getSearchHistory('demo');
 
   // Sort by created_at (newest first)
   const sortedHistory = [...tokenUsage].sort(

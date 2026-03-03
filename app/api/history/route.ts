@@ -1,15 +1,10 @@
-import { db } from '@/lib/db';
+import { getSearchHistory } from '@/lib/history';
 
 export async function POST(req: Request) {
   try {
     const { username } = await req.json();
-
-    const records = await db.execute({
-      sql: `SELECT * FROM ${process.env.RECORD_SEARCH_TABLE} WHERE username = ?`,
-      args: [username],
-    });
-
-    return Response.json(records.rows);
+    const rows = await getSearchHistory(username);
+    return Response.json(rows);
   } catch (error) {
     console.error('Error fetching search history:', error);
     return Response.json(
