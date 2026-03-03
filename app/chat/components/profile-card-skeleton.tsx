@@ -29,12 +29,6 @@ export function ProfileCardSkeleton() {
         <div className='h-6 w-24 bg-gray-700/50 rounded-full' />
         <div className='h-6 w-16 bg-gray-700/50 rounded-full' />
       </div>
-
-      {/* Bottom Section Skeleton */}
-      <div className='flex items-center justify-between mt-4 pt-4 border-t border-gray-700/50'>
-        <div className='h-5 w-24 bg-gray-700/50 rounded' />
-        <div className='h-4 w-16 bg-gray-700/50 rounded' />
-      </div>
     </div>
   );
 }

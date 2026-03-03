@@ -121,20 +121,20 @@ export default function Home() {
                     variants={staggerItem}
                     className="text-3xl font-semibold text-balance selection:bg-primary text-slate-200 selection:text-white"
                   >
-                    Your AI Talent Assignment Assistant
+                    Find the right developer for every project
                   </motion.h3>
                   <motion.p
                     variants={staggerItem}
                     className="text-balance text-gray-400 leading-relaxed selection:bg-secondary-1 selection:text-black"
                   >
-                    Optimize developer assignment to projects using AI. Analyze
-                    skills, previous experience, and availability to
-                    automatically offer you the best match.
+                    Describe your project needs and AI will match the best
+                    developers from your team based on skills, experience, and
+                    availability.
                   </motion.p>
                 </motion.div>
               )}
 
-              {!hasItems && isLoading && (
+              {!hasItems && isLoading && !searchingProfiles && (
                 <motion.p
                   key="loading"
                   initial={{ opacity: 0 }}
@@ -148,7 +148,7 @@ export default function Home() {
               )}
             </AnimatePresence>
 
-            {hasItems && (
+            {(hasItems || (isLoading && !hasItems)) && (
               <motion.div
                 variants={profileList}
                 initial="hidden"
@@ -156,17 +156,26 @@ export default function Home() {
                 exit="hidden"
                 className="w-full h-full grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4"
               >
-                {object?.slice(0, 9).map((item, index) => (
-                  <ProfileCard
-                    key={`${
-                      item?.fullName?.trim() || `profile-${index}`
-                    }-${index}`}
-                    // @ts-expect-error profile is Partial<Profile>
-                    profile={item}
-                  />
-                ))}
+                {Array.from({ length: 9 }).map((_, index) => {
+                  const item = object?.[index];
+                  const hasProfile = Boolean(item?.fullName);
 
-                {!requestFinished && <ProfileCardSkeleton />}
+                  if (hasProfile) {
+                    return (
+                      <ProfileCard
+                        key={`profile-${index}`}
+                        // @ts-expect-error profile is Partial<Profile>
+                        profile={item}
+                      />
+                    );
+                  }
+
+                  if (!requestFinished) {
+                    return <ProfileCardSkeleton key={`skeleton-${index}`} />;
+                  }
+
+                  return null;
+                })}
               </motion.div>
             )}
 
@@ -179,7 +188,7 @@ export default function Home() {
               </div>
             )}
 
-            {!requestFinished && (
+            {!requestFinished && !searchingProfiles && (
               <div className="relative w-full flex flex-col">
                 <AnimatePresence mode="wait">
                   {!hasItems && (

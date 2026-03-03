@@ -3,14 +3,14 @@ export const information = [
     id: 'smart-assignation',
     title: 'Smart Assignment',
     description:
-      'Automatically find the best candidate for each project based on skills and experience.',
+      'Instantly match developers from your team to incoming projects based on skills and experience.',
     color: 'text-secondary-1',
   },
   {
     id: 'dynamic-scoring',
     title: 'Dynamic Scoring',
     description:
-      'Calculate a compatibility score to prioritize candidates based on real experience and technological affinity.',
+      'Calculate a compatibility score to rank your developers based on real experience and technological affinity.',
     color: 'text-secondary-2',
   },
   {

@@ -13,9 +13,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'HR AI Assistant',
+  title: 'TeamMatch AI',
   description:
-    'HR AI Assistant is a platform that helps you find the best candidates for the job.',
+    'AI-powered platform that matches your internal developers to incoming projects based on skills, experience, and availability.',
 };
 
 export default function RootLayout({

@@ -49,10 +49,10 @@ const TokenUsage = async () => {
       <nav className="max-w-7xl mx-auto flex justify-between items-center w-full z-20 bg-bg/60 backdrop-blur-lg px-4 mb-10">
         <div>
           <h1 className="md:text-3xl text-2xl font-extrabold text-primary inline-block font-inter tracking-tight">
-            HR AI Assistant
+            TeamMatch AI
           </h1>
           <h2 className="text-gray-400">
-            Intelligent Technical Recruiting Agent
+            Intelligent Developer-to-Project Assignment Agent
           </h2>
         </div>
 

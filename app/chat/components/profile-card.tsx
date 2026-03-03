@@ -26,9 +26,9 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springTransition()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         onClick={() => setIsOpen(true)}
         className="bg-linear-to-br from-gray-900/50 to-gray-800/30 border border-gray-700/50 rounded-lg p-4 backdrop-blur-sm hover:border-main-light-blue/30 flex flex-col cursor-pointer transition-colors"
       >

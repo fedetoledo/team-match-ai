@@ -94,7 +94,9 @@ export function SearchInput({
                 : 'pl-2',
             )}
             placeholder={
-              selectedFile || isLoading ? '' : 'Enter the job requirements'
+              selectedFile || isLoading
+                ? ''
+                : 'Describe the project requirements or role you need to staff'
             }
             disabled={!!selectedFile || isProcessingPdf} // disable typing if file is selected or processing
           />
@@ -177,7 +179,7 @@ export function SearchInput({
             <TooltipContent>
               {isProcessingPdf
                 ? 'Processing PDF...'
-                : 'Enter requirements to send the message'}
+                : 'Enter project requirements to find matching developers'}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -195,7 +197,7 @@ export function SearchInput({
           <Kbd>⌘</Kbd>
           <span className="leading-0 text-gray-500">+</span>
           <Kbd>Enter</Kbd>
-          <span className="leading-0 text-gray-500">Search candidates</span>
+          <span className="leading-0 text-gray-500">Find matches</span>
         </KbdGroup>
       </div>
     </form>
