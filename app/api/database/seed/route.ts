@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from '@ai-sdk/google';
 import { embedMany } from 'ai';
-import { sql } from '@/lib/db';
+import { db } from '@/lib/db';
 import { fakeProfiles, FakeProfile } from '@/lib/data/fake-profiles';
 import { DEFAULT_EMBEDDING_MODEL_NAME } from '@/lib/constants';
 import { BATCH_SIZE, DELAY_BETWEEN_BATCHES, SeedLog } from './utils';
@@ -23,45 +23,57 @@ const checkEnvVars = () => {
 };
 
 const generateInitialTables = async (logs: SeedLog[]) => {
-  // Enable the pgvector extension
-  await sql`CREATE EXTENSION IF NOT EXISTS vector`;
-  logs.push({ message: '✓ Enabled pgvector extension.' });
+  const table = EMPLOYEE_PROFILE_TABLE!;
 
-  // Drop and recreate the table to ensure correct schema
-  await sql`DROP TABLE IF EXISTS ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)}`;
-  await sql`
-      CREATE TABLE ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)} (
-        id SERIAL PRIMARY KEY,
-        record_id TEXT UNIQUE,
-        name TEXT,
-        position TEXT,
-        skills TEXT[],
-        location TEXT,
-        office TEXT,
-        seniority TEXT,
-        experience_years TEXT,
-        email TEXT,
-        summary TEXT,
-        summary_embedding VECTOR(3072)
-      );
-    `;
+  // Drop existing table and index
+  await db.execute(`DROP INDEX IF EXISTS ${table}_idx`);
+  await db.execute(`DROP TABLE IF EXISTS ${table}`);
+
+  // Create the employee profiles table with vector column
+  await db.execute(`
+    CREATE TABLE ${table} (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      record_id TEXT UNIQUE,
+      name TEXT,
+      position TEXT,
+      skills TEXT,
+      location TEXT,
+      office TEXT,
+      seniority TEXT,
+      experience_years TEXT,
+      email TEXT,
+      summary TEXT,
+      summary_embedding F32_BLOB(3072)
+    )
+  `);
 
   logs.push({
-    message: `✓ Created ${process.env.EMPLOYEE_PROFILE_TABLE} table.`,
+    message: `✓ Created ${table} table.`,
   });
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS record_search (
-      id SERIAL PRIMARY KEY,
+  // Create vector index for cosine similarity search
+  await db.execute(`
+    CREATE INDEX ${table}_idx ON ${table} (
+      libsql_vector_idx(summary_embedding, 'metric=cosine', 'compress_neighbors=float8', 'max_neighbors=50')
+    )
+  `);
+
+  logs.push({ message: `✓ Created vector index ${table}_idx.` });
+
+  // Create record_search table
+  const recordSearchTable = process.env.RECORD_SEARCH_TABLE!;
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS ${recordSearchTable} (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       query TEXT,
       response TEXT,
       input_tokens INTEGER,
       output_tokens INTEGER,
-      username TEXT default 'demo',
-      model_used TEXT default 'gemini-2.5-flash-lite',
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-    `;
+      username TEXT DEFAULT 'demo',
+      model_used TEXT DEFAULT 'gemini-2.5-flash-lite',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
 
   logs.push({ message: '✓ Created record_search table.' });
 };
@@ -83,19 +95,29 @@ const insertManyRecords = async (
   data: ProcessedProfile[],
   embeddings: number[][],
 ) => {
+  const table = EMPLOYEE_PROFILE_TABLE!;
+
   for (let i = 0; i < data.length; i++) {
     const profile = data[i];
     const embedding = embeddings[i];
 
-    await sql`
-      INSERT INTO ${sql(process.env.EMPLOYEE_PROFILE_TABLE!)} (record_id, name, position, skills, location, office, seniority, experience_years, email, summary, summary_embedding) VALUES (${
-        profile.id
-      }, ${profile.name}, ${profile.position}, ${sql.array(profile.skills)}, ${
-        profile.location
-      }, ${profile.office}, ${profile.seniority}, ${profile.experience_years}, ${
-        profile.email
-      }, ${profile.summary}, ${JSON.stringify(embedding)})
-    `;
+    await db.execute({
+      sql: `INSERT INTO ${table} (record_id, name, position, skills, location, office, seniority, experience_years, email, summary, summary_embedding)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, vector(?))`,
+      args: [
+        profile.id,
+        profile.name,
+        profile.position,
+        JSON.stringify(profile.skills),
+        profile.location,
+        profile.office,
+        profile.seniority,
+        profile.experience_years,
+        profile.email,
+        profile.summary,
+        JSON.stringify(embedding),
+      ],
+    });
   }
 };
 
@@ -168,7 +190,7 @@ Professional Profile: ${processedProfile.name}
   }
 
   logs.push({
-    message: `✅ Successfully seeded/updated ${processedCount} employee profiles.`,
+    message: `Successfully seeded/updated ${processedCount} employee profiles.`,
   });
 
   return {

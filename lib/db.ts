@@ -1,15 +1,14 @@
-import postgres from 'postgres';
+import { createClient } from '@libsql/client';
 
-// Ensure the POSTGRES_URL is available
-if (!process.env.POSTGRES_URL) {
-  throw new Error('Missing POSTGRES_URL environment variable');
+if (!process.env.TURSO_DATABASE_URL) {
+  throw new Error('Missing TURSO_DATABASE_URL environment variable');
 }
 
-// Create a postgres connection
-// This works with local PostgreSQL databases (like Docker)
-export const sql = postgres(process.env.POSTGRES_URL, {
-  // Connection pool configuration
-  max: 10, // Maximum number of connections
-  idle_timeout: 20, // Close idle connections after 20 seconds
-  connect_timeout: 10, // Timeout after 10 seconds
+if (!process.env.TURSO_AUTH_TOKEN) {
+  throw new Error('Missing TURSO_AUTH_TOKEN environment variable');
+}
+
+export const db = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
 });
